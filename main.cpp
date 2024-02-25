@@ -30,7 +30,7 @@ struct PRQSniffer {
 
         cout << "Create Sniffer-Handler..." << endl;
         cout << "Start sniffing..." << endl;
-        cout << "Sniffing...\r";
+        cout << "Sniffing...";
         sniffer.sniff_loop(make_sniffer_handler(this, &PRQSniffer::handle_packet));
     }
 
