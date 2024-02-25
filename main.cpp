@@ -49,7 +49,8 @@ struct PRQSniffer {
         }
         else {
             cout << "[!] NOT a Probe-Request                             \r"; std::cout.flush();
-            cout << "[!] PDU of Type: " << pkt.pdu_type() << endl;
+            int pdu_t_val = static_cast<std::underlying_type<PDU::PDUType>::type>(pkt.pdu_type());
+            cout << "[!] PDU of Type: " << pdu_t_val << endl;
         }
 
         cout << "Sniffing...                                             \r"; std::cout.flush();
