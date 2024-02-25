@@ -1,76 +1,43 @@
+#include <iostream>
+#include <stdexcept>
 #include <tins/tins.h>
-#include <bits/stdc++.h>
 
 using namespace std;
 using namespace Tins;
 
-struct PRQSniffer {
-    string iface;
-    SnifferConfiguration config;
+// Define your probe request callback function here
+void on_probe_request(const Dot11ProbeRequest& request) {
+    // Handle probe request (e.g., print SSID, MAC address, etc.)
+    cout << "Probe Request: SSID=" << request.ssid() << ", MAC=" << request.addr2() << endl;
+}
 
-    PRQSniffer(const string iface = "wlp0s20f3"): iface(iface) {}
-
-    void sniff() {
-        //this->config.set_filter("type mgt subtype probe-req");
-        cout << "Configure Sniffer..." << endl;
-        cout << "Set promisc_mode..." << endl;
-        this->config.set_promisc_mode(true);
-
-        cout << "Create Sniffer..." << endl;
-        Sniffer sniffer(this->iface, this->config);
-
-        cout << "Create sniffer-handler..." << endl;
-        cout << "Start sniffing..." << endl;
-        sniffer.sniff_loop(make_sniffer_handler(this, &PRQSniffer::handle_packet));
+bool handle_packet(PDU& packet) {
+    if (packet.pdu_type() == PDU::DOT11_PROBE_REQ) {
+        const Dot11ProbeRequest& request = packet.rfind_pdu<Dot11ProbeRequest>();
+        on_probe_request(request);
     }
 
-    bool handle_packet(PDU& pdu) {
-        cout << "Handling Packet..." << endl;
-
-        const Dot11* dot11 = pdu.find_pdu<Dot11>();
-
-        if(!dot11) {
-            cout << "[X] Packet is not 'dot11' !!" << endl;
-            return true;
-        }
-        else {
-            cout << "[+] Packet is 'dot11'" << endl;
-        }
-
-        const Dot11ProbeRequest* probe = dot11->find_pdu<Dot11ProbeRequest>();
-
-        if(!probe) {
-            cout << "[X] Packet is not a Probe-Request !!" << endl;
-            return true;
-        }
-        else {
-            cout << "[+] Packet is a Probe-Request" << endl;
-        }
-
-        string mac = probe->addr2().to_string();
-        cout << "[?] found MAC: " << mac << endl;
-        string ssid = probe->ssid();
-        cout << "[?] fount SSID: " << ssid << endl;
-        int signal = pdu.rfind_pdu<RadioTap>().dbm_signal();
-        cout << "[?] found SIGNAL: " << signal << endl;
-
-        cout << "(" << signal << "dBm)  [" << mac << "]\t-->\t" << ssid << endl;
-
-        return true;
-    }
-};
+    return true;
+}
 
 int main(int argc, char* argv[]) {
-    if(argc != 2) {
+    if (argc != 2) {
         cout << "Usage: " << argv[0] << " <interface>" << endl;
         return 1;
     }
 
-    //only whan testing commented:
-    // const string IFACE = argv[1]
+    try {
+        SnifferConfiguration config;
+        config.set_immediate_mode(true);
+        config.set_filter("wlan type mgt subtype probe-req"); // Adjust the filter
 
-    PRQSniffer prq_sniffer = PRQSniffer();
-    prq_sniffer.sniff();
+        Sniffer sniffer(argv[1], config);
+        cout << "Starting probe request capture on interface " << argv[1] << endl;
 
-    return 0;
+        sniffer.sniff_loop(handle_packet);
+        
+    } catch (exception& ex) {
+        cerr << "Error: " << ex.what() << endl;
+        return 1;
+    }
 }
