@@ -4,6 +4,8 @@
 using namespace std;
 using namespace Tins;
 
+void clear_screen() { cout << "\x1B[3J\x1B[H"; }
+
 struct PRQSniffer {
     string iface;
     SnifferConfiguration config;
@@ -11,6 +13,7 @@ struct PRQSniffer {
     PRQSniffer(const string iface = "wlp0s20f3"): iface(iface) {}
 
     void configure() {
+        clear_screen();
         cout << "\n[Configure Sniffer]" << endl;
 
         /*cout << "set PCAP-Filter..." << endl;
