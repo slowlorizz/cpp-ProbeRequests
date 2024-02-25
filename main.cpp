@@ -38,7 +38,7 @@ int main(int argc, char* argv[]) {
     signal(SIGINT, raiseFlag);
 
     SnifferConfiguration config;
-    config.set_filter("wlan");
+    config.set_filter("type mgt subtype probe-req");
     config.set_promisc_mode(true);
 
     Sniffer sniffer(argv[1], config);
