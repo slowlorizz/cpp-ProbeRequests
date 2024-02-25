@@ -11,13 +11,13 @@ struct PRQSniffer {
     PRQSniffer(const string iface = "wlp0s20f3"): iface(iface) {}
 
     void configure() {
-        cout << "Configure Sniffer..." << endl;
+        cout << "\n[Configure Sniffer]" << endl;
 
         /*cout << "set PCAP-Filter..." << endl;
         this->config.set_filter("type mgt subtype probe-req");*/
         
-        cout << "Set promisc mode..." << endl;
-        this->config.set_promisc_mode(true);
+        cout << "Set immediate mode..." << endl;
+        this->config.set_immediate_mode(true);
 
         cout << "Configured Interface: " << this->iface << endl;
     }
@@ -25,49 +25,31 @@ struct PRQSniffer {
     void sniff() {
         this->configure();
 
+        cout << "\n[Sniff]" << endl;
         cout << "Create Sniffer..." << endl;
         Sniffer sniffer(this->iface, this->config);
 
         cout << "Create Sniffer-Handler..." << endl;
         cout << "Start sniffing..." << endl;
+        cout << endl;
+        cout << "----------[PACKETS]----------" << endl;
+        cout << endl;
         cout << "Sniffing...\r"; std::cout.flush();
         sniffer.sniff_loop(make_sniffer_handler(this, &PRQSniffer::handle_packet));
     }
 
-    bool handle_packet(PDU& pdu) {
-        cout << "[*] Found Packet!                                                         \r"; std::cout.flush();
-        cout << "[*] Handling Packet...                                                         \r"; std::cout.flush();
-
-        const Dot11* dot11 = pdu.find_pdu<Dot11>();
-
-        if(!dot11) {
-            cout << "[X] not 'dot11'                                                          " << endl; 
-            return true;
+    bool handle_packet(PDU& pkt) {
+        cout << "[>] handle packet...                                    \r"; std::cout.flush();
+        if (pkt.pdu_type() == PDU::DOT11_PROBE_REQ) {
+            const Dot11ProbeRequest& request = pkt.rfind_pdu<Dot11ProbeRequest>();
+            cout << "[+] Probe Request: SSID=" << request.ssid() << ", MAC=" << request.addr2().to_string() << ", SIGNAL=" << pkt.rfind_pdu<RadioTap>().dbm_signal() << "dBm" << endl;
         }
         else {
-            cout << "[+] is 'dot11'                                                          \r"; std::cout.flush();
+            cout << "[!] NOT a Probe-Request                             \r"; std::cout.flush();
+            cout << "[!] PDU of Type: " << pkt.pdu_type() << endl;
         }
 
-        const Dot11ProbeRequest* probe = dot11->find_pdu<Dot11ProbeRequest>();
-
-        if(!probe) {
-            cout << "[X] not a Probe-Request                                                          " << endl;
-            return true;
-        }
-        else {
-            cout << "[+] a Probe-Request                                                         \r"; std::cout.flush();
-        }
-
-        string mac = probe->addr2().to_string();
-        cout << "[?] found MAC: " << mac << "                                                         \r"; std::cout.flush();
-        string ssid = probe->ssid();
-        cout << "[?] fount SSID: " << ssid << "                                                         \r"; std::cout.flush();
-        int signal = pdu.rfind_pdu<RadioTap>().dbm_signal();
-        cout << "[?] found SIGNAL: " << signal << "                                                         \r"; std::cout.flush();
-
-        cout << "(" << signal << "dBm)  [" << mac << "]\t-->\t" << ssid << endl;
-
-        cout << "Sniffing...\r"; std::cout.flush();
+        cout << "Sniffing...                                             \r"; std::cout.flush();
         return true;
     }
 };
