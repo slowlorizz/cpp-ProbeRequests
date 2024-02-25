@@ -16,8 +16,8 @@ struct PRQSniffer {
         /*cout << "set PCAP-Filter..." << endl;
         this->config.set_filter("type mgt subtype probe-req");*/
         
-        cout << "Set immediate mode..." << endl;
-        this->config.set_immediate_mode(true);
+        cout << "Set promisc mode..." << endl;
+        this->config.set_promisc_mode(true);
 
         cout << "Configured Interface: " << this->iface << endl;
     }
